@@ -1,4 +1,5 @@
--- Insertar/actualizar tabla Reserva
+-- Insertar/actualizar tabla Reserva (HAY QUE ACTUALIZAR HOTEL TAMBIÉN)
+-- La fecha de entrada de un cliente en un hotel nunca podrá ser posterior a la de salida.
 CREATE OR REPLACE PROCEDURE INSERT_UPDATE_RESERVA(  COD_CLIENTE NUMBER,
                                                     COD_HOTEL NUMBER,
                                                     FECHA_INICIO DATE,
@@ -92,10 +93,10 @@ BEGIN
             ENDIF;
 
         ELSE
-            raise_application_error(20004,'LOCALIDAD NO VÁLIDA');
+            RAISE_APPLICATION_ERROR(-20004,'LOCALIDAD NO VÁLIDA');
         ENDIF;
     ELSE
-        raise_application_error(20005,'FECHA DE FIN NO PUEDE MAYOR A FECHA DE INICIO');
+        RAISE_APPLICATION_ERROR(-20005,'FECHA DE FIN NO PUEDE MAYOR A FECHA DE INICIO');
     ENDIF;
 END;
 
@@ -247,7 +248,7 @@ BEGIN
         ENDIF;
 
     ELSE
-        raise_application_error(20004,'LOCALIDAD NO VÁLIDA');
+        RAISE_APPLICATION_ERROR(-20006,'LOCALIDAD NO VÁLIDA');
     ENDIF;
 END;
 
@@ -259,6 +260,7 @@ CREATE OR REPLACE PROCEDURE INSERT_UPDATE_EMPLEADO( COD_EMPLEADO NUMBER,
 							                        SALARIO_EMP NUMBER,
                                                     DNI_EMP NUMBER,
 							                        TLF_EMP NUMBER,
+                                                    FECHA_CONT_EMP DATE,
 						                            FECHA_INI_EMP DATE
                                                     LOCALIDAD VARCHAR) IS
 
@@ -277,14 +279,15 @@ BEGIN
             SET NOMBRE = NOMBRE_EMP,
                 DIRECCION = DIRECCION_EMP,
                 SALARIO = SALARIO_EMP,
-        DNI = DNI_EMP,
-        TLF = TLF_EMP,
+                DNI = DNI_EMP,
+                TLF = TLF_EMP,
+                FECHA_CONTRATO = FECHA_CONT_EMP,
                 FECHA_INI = FECHA_INI_EMP
             WHERE   COD_EMPLEADO = EID
             AND COD_HOTEL = HID;
         ELSE
             INSERT INTO PAPEL1.EMPLADO17
-            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_INI_EMP);
+            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_CONT_EMP, FECHA_INI_EMP);
         ENDIF;
     
     ELSIF (LOCALIDAD = 'Cádiz' OR LOCALIDAD = 'Huelva') THEN
@@ -299,14 +302,15 @@ BEGIN
             SET NOMBRE = NOMBRE_EMP,
                 DIRECCION = DIRECCION_EMP,
                 SALARIO = SALARIO_EMP,
-        DNI = DNI_EMP,
-        TLF = TLF_EMP,
+                DNI = DNI_EMP,
+                TLF = TLF_EMP,
+                FECHA_CONTRATO = FECHA_CONT_EMP,
                 FECHA_INI = FECHA_INI_EMP
             WHERE   COD_EMPLEADO = EID
             AND COD_HOTEL = HID;
         ELSE
             INSERT INTO PAPEL2.EMPLEADO36
-            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_INI_EMP);
+            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_CONT_EMP, FECHA_INI_EMP);
         ENDIF;
     
     ELSIF (LOCALIDAD = 'Sevilla' OR LOCALIDAD = 'Córdoba') THEN
@@ -321,14 +325,15 @@ BEGIN
             SET NOMBRE = NOMBRE_EMP,
                 DIRECCION = DIRECCION_EMP,
                 SALARIO = SALARIO_EMP,
-        DNI = DNI_EMP,
-        TLF = TLF_EMP,
+                DNI = DNI_EMP,
+                TLF = TLF_EMP,
+                FECHA_CONTRATO = FECHA_CONT_EMP,
                 FECHA_INI = FECHA_INI_EMP
             WHERE   COD_EMPLEADO = EID
             AND COD_HOTEL = HID;
         ELSE
             INSERT INTO PAPEL3.EMPLEADO25
-            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_INI_EMP);
+            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_CONT_EMP, FECHA_INI_EMP);
         ENDIF;
     
     ELSIF (LOCALIDAD = 'Málaga' OR LOCALIDAD = 'Almería') THEN
@@ -343,18 +348,19 @@ BEGIN
             SET NOMBRE = NOMBRE_EMP,
                 DIRECCION = DIRECCION_EMP,
                 SALARIO = SALARIO_EMP,
-        DNI = DNI_EMP,
-        TLF = TLF_EMP,
+                DNI = DNI_EMP,
+                TLF = TLF_EMP,
+                FECHA_CONTRATO = FECHA_CONT_EMP,
                 FECHA_INI = FECHA_INI_EMP
             WHERE   COD_EMPLEADO = EID
             AND COD_HOTEL = HID;
         ELSE
             INSERT INTO PAPEL4.EMPLEADO48
-            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_INI_EMP);
+            VALUES (COD_EMPLEADO, COD_HOTEL, NOMBRE_EMP , DIRECCION_EMP, SALARIO_EMP, DNI_EMP, TLF_EMP, FECHA_CONT_EMP, FECHA_INI_EMP);
         ENDIF;
 
     ELSE
-        raise_application_error(20004,'LOCALIDAD NO VÁLIDA');
+        RAISE_APPLICATION_ERROR(-20007,'LOCALIDAD NO VÁLIDA');
     ENDIF;
 END;
 
@@ -493,7 +499,7 @@ BEGIN
         ENDIF;
 
     ELSE
-        raise_application_error(20004,'LOCALIDAD NO VÁLIDA');
+        RAISE_APPLICATION_ERROR(-20008,'LOCALIDAD NO VÁLIDA');
     ENDIF;
 END;
 
@@ -555,6 +561,6 @@ BEGIN
         ENDIF;
     
     ELSE
-        raise_application_error(20004,'LOCALIDAD NO VÁLIDA');
+        RAISE_APPLICATION_ERROR(-20009,'LOCALIDAD NO VÁLIDA');
     ENDIF;
 END;
