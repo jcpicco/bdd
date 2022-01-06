@@ -144,15 +144,96 @@ BEGIN
 END;
 /
 
+--2. Dar de baja a un empleado. Argumentos: Código de empleado y fecha de baja. Esta
+--operación requiere, antes de proceder a la eliminación del empleado, crear el
+--registro histórico correspondiente.
+CREATE OR REPLACE PROCEDURE DELETE_EMPLEADO( COD_EMPLEADO NUMBER,
+                                                    FECHA_FIN DATE
+                                                    ) IS
+EMPCOUNT NUMBER;
+DIRCOUNT NUMBER;
+HOT NUMBER;
+LOCALIDAD VARCHAR(20);
+FECHA_I DATE;
+
+BEGIN
+    SELECT COUNT (*)
+    INTO EMPCOUNT
+    FROM EMPLEADO
+    WHERE COD_EMPLEADO = EID;
+
+    IF(EMPCOUNT = 0) THEN
+        RAISE_APPLICATION_ERROR(-20014,'Este codigo de empleado no se encuentra registrado.');
+    END IF;
+
+    SELECT COUNT (*)
+    INTO DIRCOUNT
+    FROM HOTEL
+    WHERE EID = COD_EMPLEADO;
+
+    IF (DIRCOUNT = 0) THEN
+        SELECT HID
+        INTO HOT
+        FROM EMPLEADO
+        WHERE COD_EMPLEADO = EID;
+        
+        SELECT FECHA_INI
+        INTO FECHA_I
+        FROM EMPLEADO
+        WHERE COD_EMPLEADO = EID;
+
+        SELECT PROVINCIA
+        INTO LOCALIDAD
+        FROM HOTEL
+        WHERE HOT = HID;
+
+        IF (LOCALIDAD = 'Granada' OR LOCALIDAD = 'Jaén') THEN
+            INSERT INTO PAPEL3.HISTORICO
+            VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
+
+            DELETE FROM PAPEL1.EMPLEADO17 WHERE COD_EMPLEADO = EID;
+
+        ELSIF (LOCALIDAD = 'Cádiz' OR LOCALIDAD = 'Huelva') THEN
+            INSERT INTO PAPEL3.HISTORICO
+            VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
+        
+            DELETE FROM PAPEL2.EMPLEADO36 WHERE COD_EMPLEADO = EID;
+
+        ELSIF (LOCALIDAD = 'Sevilla' OR LOCALIDAD = 'Córdoba') THEN
+            INSERT INTO PAPEL3.HISTORICO
+            VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
+        
+            DELETE FROM PAPEL3.EMPLEADO25 WHERE COD_EMPLEADO = EID;
+
+        ELSIF (LOCALIDAD = 'Málaga' OR LOCALIDAD = 'Almería') THEN
+            INSERT INTO PAPEL3.HISTORICO
+            VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
+        
+            DELETE FROM PAPEL4.EMPLEADO48 WHERE COD_EMPLEADO = EID;
+        ELSE
+            RAISE_APPLICATION_ERROR(-20015,'LOCALIDAD NO VÁLIDA');
+        END IF;
+    ELSE
+        RAISE_APPLICATION_ERROR(-20111,'Este empleado es un director. No puede borrarse.');
+    END IF;
+END;
+/
+
 -- Cambiar Sucursal de empleado
 CREATE OR REPLACE PROCEDURE CAMBIAR_SUCURSAL_EMPLEADO(  COD_EMPLEADO NUMBER,
                                                         COD_HOTEL NUMBER,
                                                         FECHA_CONTRATO_FINAL DATE,
-                                                        FECHA_INI_EMP DATE) IS
+                                                        FECHA_INI_EMP DATE,
+                                                        DIR_NUEVA VARCHAR,
+                                                        TLF_NUEVO VARCHAR) IS
 
 FECHA_CONTRATO_ANTIGUA DATE;
 HOTEL_ANTIGUO NUMBER;
-LOCALIDAD VARCHAR(20);
+NOMBRE_ANTIGUO VARCHAR(50);
+DIRECCION_ANTIGUA VARCHAR(70);
+SALARIO_ANTIGUO NUMBER;
+DNI_ANTIGUO NUMBER;
+TLF_ANTIGUO NUMBER;
 ECOUNT NUMBER;
 
 BEGIN
@@ -168,72 +249,66 @@ BEGIN
         WHERE EID = COD_EMPLEADO;
 
         IF(ECOUNT > 0) THEN
-            SELECT PROVINCIA
-            INTO LOCALIDAD
-            FROM HOTEL
-            WHERE HID = COD_HOTEL;
+            SELECT FECHA_CONTRATO
+            INTO FECHA_CONTRATO_ANTIGUA
+            FROM EMPLEADO
+            WHERE COD_EMPLEADO = EID;
 
-            IF (LOCALIDAD = 'Granada' OR LOCALIDAD = 'Jaén') THEN
-                SELECT FECHA_CONTRATO
-                INTO FECHA_CONTRATO_ANTIGUA
-                FROM PAPEL1.EMPLEADO17
-                WHERE COD_EMPLEADO = EID;
+            SELECT NOMBRE
+            INTO NOMBRE_ANTIGUO
+            FROM EMPLEADO
+            WHERE COD_EMPLEADO = EID;
 
-                UPDATE PAPEL1.EMPLEADO17
-                SET HID = COD_HOTEL,
-                    FECHA_CONTRATO = FECHA_INI_EMP,
-                    FECHA_INI = FECHA_INI_EMP
-                WHERE   COD_EMPLEADO = EID;
-
-                INSERT INTO PAPEL3.HISTORICO
-                VALUES (COD_EMPLEADO, HOTEL_ANTIGUO, FECHA_CONTRATO_ANTIGUA, FECHA_CONTRATO_FINAL);
+            SELECT SALARIO
+            INTO SALARIO_ANTIGUO
+            FROM EMPLEADO
+            WHERE COD_EMPLEADO = EID;
             
-            ELSIF (LOCALIDAD = 'Cádiz' OR LOCALIDAD = 'Huelva') THEN
-                SELECT FECHA_CONTRATO
-                INTO FECHA_CONTRATO_ANTIGUA
-                FROM PAPEL2.EMPLEADO36
+            SELECT DNI
+            INTO DNI_ANTIGUO
+            FROM EMPLEADO
+            WHERE COD_EMPLEADO = EID;
+
+            IF(DIR_NUEVA IS NULL AND TLF_NUEVO IS NULL) THEN
+                SELECT DIRECCION
+                INTO DIRECCION_ANTIGUA
+                FROM EMPLEADO
                 WHERE COD_EMPLEADO = EID;
 
-                UPDATE PAPEL2.EMPLEADO36
-                SET HID = COD_HOTEL,
-                    FECHA_CONTRATO = FECHA_INI_EMP,
-                    FECHA_INI = FECHA_INI_EMP
-                WHERE   COD_EMPLEADO = EID;
+                SELECT TLF
+                INTO TLF_ANTIGUO
+                FROM EMPLEADO
+                WHERE COD_EMPLEADO = EID;
 
-                INSERT INTO PAPEL3.HISTORICO
-                VALUES (COD_EMPLEADO, HOTEL_ANTIGUO, FECHA_CONTRATO_ANTIGUA, FECHA_CONTRATO_FINAL);
+                DELETE_EMPLEADO(COD_EMPLEADO, FECHA_CONTRATO_FINAL);
+
+                INSERT_EMPLEADO(COD_EMPLEADO, COD_HOTEL, NOMBRE_ANTIGUO, DIRECCION_ANTIGUA, SALARIO_ANTIGUO, DNI_ANTIGUO, TLF_ANTIGUO, FECHA_CONTRATO_ANTIGUA, FECHA_INI_EMP);
             
-            ELSIF (LOCALIDAD = 'Sevilla' OR LOCALIDAD = 'Córdoba') THEN
-                SELECT FECHA_CONTRATO
-                INTO FECHA_CONTRATO_ANTIGUA
-                FROM PAPEL3.EMPLEADO25
+            ELSIF(DIR_NUEVA IS NULL AND TLF_NUEVO IS NOT NULL) THEN
+                
+                SELECT DIRECCION
+                INTO DIRECCION_ANTIGUA
+                FROM EMPLEADO
                 WHERE COD_EMPLEADO = EID;
 
-                UPDATE PAPEL3.EMPLEADO25
-                SET HID = COD_HOTEL,
-                    FECHA_CONTRATO = FECHA_INI_EMP,
-                    FECHA_INI = FECHA_INI_EMP
-                WHERE   COD_EMPLEADO = EID;
+                DELETE_EMPLEADO(COD_EMPLEADO, FECHA_CONTRATO_FINAL);
 
-                INSERT INTO PAPEL3.HISTORICO
-                VALUES (COD_EMPLEADO, HOTEL_ANTIGUO, FECHA_CONTRATO_ANTIGUA, FECHA_CONTRATO_FINAL);
+                INSERT_EMPLEADO(COD_EMPLEADO, COD_HOTEL, NOMBRE_ANTIGUO, DIRECCION_ANTIGUA, SALARIO_ANTIGUO, DNI_ANTIGUO, TLF_NUEVO, FECHA_CONTRATO_ANTIGUA, FECHA_INI_EMP);
             
-            ELSIF (LOCALIDAD = 'Málaga' OR LOCALIDAD = 'Almería') THEN
-                SELECT FECHA_CONTRATO
-                INTO FECHA_CONTRATO_ANTIGUA
-                FROM PAPEL4.EMPLEADO48
+            ELSIF(DIR_NUEVA IS NOT NULL AND TLF_NUEVO IS NULL) THEN
+                SELECT TLF
+                INTO TLF_ANTIGUO
+                FROM EMPLEADO
                 WHERE COD_EMPLEADO = EID;
 
-                UPDATE PAPEL4.EMPLEADO48
-                SET HID = COD_HOTEL,
-                    FECHA_CONTRATO = FECHA_INI_EMP,
-                    FECHA_INI = FECHA_INI_EMP
-                WHERE   COD_EMPLEADO = EID;
+                DELETE_EMPLEADO(COD_EMPLEADO, FECHA_CONTRATO_FINAL);
 
-                INSERT INTO PAPEL3.HISTORICO
-                VALUES (COD_EMPLEADO, HOTEL_ANTIGUO, FECHA_CONTRATO_ANTIGUA, FECHA_CONTRATO_FINAL);
-            ELSE
-                RAISE_APPLICATION_ERROR(-20009,'LOCALIDAD NO VÁLIDA');
+                INSERT_EMPLEADO(COD_EMPLEADO, COD_HOTEL, NOMBRE_ANTIGUO, DIR_NUEVA, SALARIO_ANTIGUO, DNI_ANTIGUO, TLF_ANTIGUO, FECHA_CONTRATO_ANTIGUA, FECHA_INI_EMP);
+            
+            ELSIF(DIR_NUEVA IS NOT NULL AND TLF_NUEVO IS NOT NULL) THEN
+                DELETE_EMPLEADO(COD_EMPLEADO, FECHA_CONTRATO_FINAL);
+
+                INSERT_EMPLEADO(COD_EMPLEADO, COD_HOTEL, NOMBRE_ANTIGUO, DIR_NUEVA, SALARIO_ANTIGUO, DNI_ANTIGUO, TLF_NUEVO, FECHA_CONTRATO_ANTIGUA, FECHA_INI_EMP);
             END IF;
         ELSE
             RAISE_APPLICATION_ERROR(-20010,'Empleado no existe.');
@@ -293,71 +368,6 @@ BEGIN
         END IF;
     ELSE
         RAISE_APPLICATION_ERROR(-20013,'Empleado no existe.');
-    END IF;
-END;
-/
-
---2. Dar de baja a un empleado. Argumentos: Código de empleado y fecha de baja. Esta
---operación requiere, antes de proceder a la eliminación del empleado, crear el
---registro histórico correspondiente.
-CREATE OR REPLACE PROCEDURE DELETE_EMPLEADO( COD_EMPLEADO NUMBER,
-                                                    FECHA_FIN DATE
-                                                    ) IS
-EMPCOUNT NUMBER;
-HOT NUMBER;
-LOCALIDAD VARCHAR(20);
-FECHA_I DATE;
-
-BEGIN
-    SELECT COUNT (*)
-    INTO EMPCOUNT
-    FROM EMPLEADO
-    WHERE COD_EMPLEADO = EID;
-
-    IF(EMPCOUNT = 0) THEN
-        RAISE_APPLICATION_ERROR(-20014,'Este codigo de empleado no se encuentra registrado.');
-    END IF;
-
-    SELECT HID
-    INTO HOT
-    FROM EMPLEADO
-    WHERE COD_EMPLEADO = EID;
-	
-    SELECT FECHA_INI
-    INTO FECHA_I
-    FROM PAPEL1.EMPLEADO17
-    WHERE COD_EMPLEADO = EID;
-
-    SELECT PROVINCIA
-    INTO LOCALIDAD
-    FROM HOTEL
-    WHERE HOT = HID;
-
-    IF (LOCALIDAD = 'Granada' OR LOCALIDAD = 'Jaén') THEN
-        INSERT INTO PAPEL3.HISTORICO
-        VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
-
-        DELETE FROM PAPEL1.EMPLEADO17 WHERE COD_EMPLEADO = EID;
-
-    ELSIF (LOCALIDAD = 'Cádiz' OR LOCALIDAD = 'Huelva') THEN
-        INSERT INTO PAPEL3.HISTORICO
-        VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
-    
-        DELETE FROM PAPEL2.EMPLEADO36 WHERE COD_EMPLEADO = EID;
-
-    ELSIF (LOCALIDAD = 'Sevilla' OR LOCALIDAD = 'Córdoba') THEN
-        INSERT INTO PAPEL3.HISTORICO
-        VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
-    
-        DELETE FROM PAPEL3.EMPLEADO25 WHERE COD_EMPLEADO = EID;
-
-    ELSIF (LOCALIDAD = 'Málaga' OR LOCALIDAD = 'Almería') THEN
-        INSERT INTO PAPEL3.HISTORICO
-        VALUES(COD_EMPLEADO, HOT, FECHA_I, FECHA_FIN);
-    
-        DELETE FROM PAPEL4.EMPLEADO48 WHERE COD_EMPLEADO = EID;
-    ELSE
-        RAISE_APPLICATION_ERROR(-20015,'LOCALIDAD NO VÁLIDA');
     END IF;
 END;
 /

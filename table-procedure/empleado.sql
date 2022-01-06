@@ -77,7 +77,7 @@ BEGIN
             SELECT PROVINCIA
             INTO LOCALIDAD
             FROM HOTEL
-            WHERE HID = COD_HOTEL;
+            WHERE HID = HOTEL_ANTIGUO;
 
             IF (LOCALIDAD = 'Granada' OR LOCALIDAD = 'Jaén') THEN
                 SELECT FECHA_CONTRATO
