@@ -751,7 +751,6 @@ END;
 /
 
 -- Insertar/actualizar tabla Proveedor
--- 16. Ningún proveedor será de otra ciudad distinta a Granada o a Sevilla.
 CREATE OR REPLACE PROCEDURE INSERT_PROVEEDOR(   COD_PROVEEDOR NUMBER,
                                                 NOMBRE_PRO VARCHAR,
                                                 LOCALIDAD VARCHAR) IS
